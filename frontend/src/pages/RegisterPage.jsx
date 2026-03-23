@@ -55,10 +55,8 @@ export default function RegisterPage() {
 
       <div className="w-full max-w-md relative animate-fade-in">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-brand-500/10 border border-brand-500/20 text-4xl mb-4">
-            🌱
-          </div>
-          <h1 className="font-display text-3xl font-bold text-white">Join SmartGarbage</h1>
+          
+          <h1 className="font-display text-3xl font-bold text-white">Join SwachhNet</h1>
           <p className="text-gray-500 mt-2">Help keep your city clean</p>
         </div>
 

@@ -48,11 +48,8 @@ export default function LoginPage() {
       <div className="w-full max-w-md relative animate-fade-in">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-brand-500/10 border border-brand-500/20 text-4xl mb-4">
-            🗑️
-          </div>
           <h1 className="font-display text-3xl font-bold text-white">Welcome back</h1>
-          <p className="text-gray-500 mt-2">Sign in to your SmartGarbage account</p>
+          <p className="text-gray-500 mt-2">Sign in to your SwachhNet account</p>
         </div>
 
         {/* Form Card */}
@@ -109,13 +106,6 @@ export default function LoginPage() {
               ) : 'Sign In'}
             </button>
           </form>
-
-          {/* Demo credentials hint */}
-          <div className="mt-4 p-3 bg-brand-500/5 border border-brand-500/10 rounded-xl">
-            <p className="text-xs text-gray-500 font-mono text-center">
-              Admin: admin@garbage.com / Admin@123
-            </p>
-          </div>
 
           <p className="mt-5 text-center text-sm text-gray-500">
             Don't have an account?{' '}

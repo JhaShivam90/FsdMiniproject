@@ -8,12 +8,26 @@
     scroll-behavior: smooth;
   }
 
-  body {
-    @apply bg-dark-900 text-gray-100 antialiased;
-    background-image: 
+  /* ── DARK MODE (default) ─────────────────────────────── */
+  html.dark body {
+    @apply bg-dark-900 text-gray-100;
+    background-image:
       radial-gradient(ellipse at 20% 20%, rgba(34, 197, 94, 0.06) 0%, transparent 50%),
       radial-gradient(ellipse at 80% 80%, rgba(22, 163, 74, 0.04) 0%, transparent 50%);
+  }
+
+  /* ── LIGHT MODE ──────────────────────────────────────── */
+  html.light body {
+    background-color: #f0fdf4;
+    color: #111827;
+    background-image:
+      radial-gradient(ellipse at 20% 20%, rgba(34, 197, 94, 0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, rgba(22, 163, 74, 0.05) 0%, transparent 50%);
+  }
+
+  body {
     min-height: 100vh;
+    @apply antialiased;
   }
 
   h1, h2, h3, h4 {
@@ -22,60 +36,102 @@
 }
 
 @layer components {
+
+  /* ── BUTTONS ─────────────────────────────────────────── */
   .btn-primary {
     @apply bg-brand-500 hover:bg-brand-600 text-white font-semibold px-6 py-3 rounded-xl transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
+  /* dark btn-secondary */
+  html.dark .btn-secondary {
+    @apply bg-dark-700 hover:bg-dark-600 border border-brand-700/40 text-gray-200;
+  }
+  /* light btn-secondary */
+  html.light .btn-secondary {
+    background-color: #ffffff;
+    border: 1px solid #bbf7d0;
+    color: #166534;
+  }
+  html.light .btn-secondary:hover {
+    background-color: #f0fdf4;
+  }
   .btn-secondary {
-    @apply bg-dark-700 hover:bg-dark-600 border border-brand-700/40 text-gray-200 font-medium px-6 py-3 rounded-xl transition-all duration-200;
+    @apply font-medium px-6 py-3 rounded-xl transition-all duration-200;
   }
 
+  /* ── CARD ────────────────────────────────────────────── */
+  html.dark .card {
+    @apply bg-dark-800 border border-white/5;
+  }
+  html.light .card {
+    background-color: #ffffff;
+    border: 1px solid #d1fae5;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
   .card {
-    @apply bg-dark-800 border border-white/5 rounded-2xl p-6 backdrop-blur-sm;
+    @apply rounded-2xl p-6 backdrop-blur-sm;
   }
 
+  /* ── INPUT ───────────────────────────────────────────── */
+  html.dark .input {
+    @apply bg-dark-700 border-white/10 text-gray-100 placeholder-gray-500;
+  }
+  html.light .input {
+    background-color: #f9fafb;
+    border-color: #d1fae5;
+    color: #111827;
+  }
+  html.light .input::placeholder {
+    color: #9ca3af;
+  }
+  html.light .input:focus {
+    border-color: #22c55e;
+    box-shadow: 0 0 0 3px rgba(34,197,94,0.15);
+  }
   .input {
-    @apply w-full bg-dark-700 border border-white/10 rounded-xl px-4 py-3 text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all;
+    @apply w-full border rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all;
   }
 
+  /* ── STATUS BADGES (unchanged — already colorful enough) */
   .status-badge {
     @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold font-mono uppercase tracking-wide;
   }
+  .status-open     { @apply bg-red-500/15 text-red-400 border border-red-500/20; }
+  .status-assigned { @apply bg-amber-500/15 text-amber-400 border border-amber-500/20; }
+  .status-resolved { @apply bg-brand-500/15 text-brand-400 border border-brand-500/20; }
 
-  .status-open {
-    @apply bg-red-500/15 text-red-400 border border-red-500/20;
+  /* ── NAVBAR ──────────────────────────────────────────── */
+  html.dark .navbar {
+    background-color: rgba(10,15,10,0.80);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  html.light .navbar {
+    background-color: rgba(255,255,255,0.85);
+    border-bottom: 1px solid #d1fae5;
   }
 
-  .status-assigned {
-    @apply bg-amber-500/15 text-amber-400 border border-amber-500/20;
-  }
+  /* ── PAGE TEXT helpers ───────────────────────────────── */
+  html.light .text-muted  { color: #6b7280; }
+  html.dark  .text-muted  { @apply text-gray-500; }
 
-  .status-resolved {
-    @apply bg-brand-500/15 text-brand-400 border border-brand-500/20;
-  }
+  /* skeleton loaders */
+  html.dark  .skeleton { @apply bg-dark-700; }
+  html.light .skeleton { background-color: #e5e7eb; }
 }
 
-/* Leaflet map dark theme overrides */
-.leaflet-container {
-  background: #0a0f0a !important;
-  border-radius: 1rem;
-}
-
-.leaflet-tile {
+/* Leaflet dark theme */
+html.dark .leaflet-tile {
   filter: brightness(0.7) saturate(0.5) !important;
+}
+html.light .leaflet-tile {
+  filter: brightness(1) saturate(1) !important;
 }
 
 /* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-}
-::-webkit-scrollbar-track {
-  background: #0f1a0f;
-}
-::-webkit-scrollbar-thumb {
-  background: #22c55e40;
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #22c55e80;
-}
+::-webkit-scrollbar { width: 6px; }
+html.dark  ::-webkit-scrollbar-track { background: #0f1a0f; }
+html.light ::-webkit-scrollbar-track { background: #f0fdf4; }
+html.dark  ::-webkit-scrollbar-thumb { background: #22c55e40; border-radius: 3px; }
+html.light ::-webkit-scrollbar-thumb { background: #22c55e80; border-radius: 3px; }
+html.dark  ::-webkit-scrollbar-thumb:hover { background: #22c55e80; }
+html.light ::-webkit-scrollbar-thumb:hover { background: #16a34a; }

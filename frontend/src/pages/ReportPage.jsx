@@ -1,18 +1,59 @@
 /**
- * pages/ReportPage.jsx — Form to submit a new garbage complaint
- * Captures: photo upload, GPS coordinates, optional description
+ * pages/ReportPage.jsx — Garbage complaint form with light/dark support
  */
 
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from '../context/ThemeContext';
 import Navbar from '../components/Navbar';
 import api from '../utils/api';
 
+// ── Icon components ──────────────────────────────────
+const IconCamera = () => (
+  <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+  </svg>
+);
+const IconPin = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+  </svg>
+);
+const IconText = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 12h16M4 18h7" />
+  </svg>
+);
+const IconX = () => (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+  </svg>
+);
+const IconSpinner = () => (
+  <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+  </svg>
+);
+const IconSuccess = () => (
+  <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+  </svg>
+);
+const IconUpload = () => (
+  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+  </svg>
+);
+
 export default function ReportPage() {
+  const { isDark } = useTheme();
   const [image, setImage] = useState(null);
   const [preview, setPreview] = useState(null);
   const [location, setLocation] = useState(null);
-  const [locationStatus, setLocationStatus] = useState('idle'); // idle | loading | success | error
+  const [locationStatus, setLocationStatus] = useState('idle');
   const [description, setDescription] = useState('');
   const [address, setAddress] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -21,85 +62,57 @@ export default function ReportPage() {
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
 
-  // Handle image file selection + generate preview
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      setError('Image size must be under 5MB');
-      return;
-    }
+    if (file.size > 5 * 1024 * 1024) { setError('Image must be under 5MB'); return; }
     setImage(file);
     setPreview(URL.createObjectURL(file));
     setError('');
   };
 
-  // Handle drag-and-drop on image area
   const handleDrop = (e) => {
     e.preventDefault();
     const file = e.dataTransfer.files[0];
-    if (file && file.type.startsWith('image/')) {
+    if (file?.type.startsWith('image/')) {
       setImage(file);
       setPreview(URL.createObjectURL(file));
       setError('');
     }
   };
 
-  // Use browser Geolocation API to get GPS coordinates
   const captureLocation = () => {
-    if (!navigator.geolocation) {
-      setLocationStatus('error');
-      setError('Geolocation is not supported by your browser');
-      return;
-    }
+    if (!navigator.geolocation) { setError('Geolocation not supported'); return; }
     setLocationStatus('loading');
     navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const { latitude, longitude } = pos.coords;
+      async ({ coords: { latitude, longitude } }) => {
         setLocation({ latitude, longitude });
         setLocationStatus('success');
-
-        // Reverse geocode using OpenStreetMap Nominatim (free, no API key)
         try {
-          const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`
-          );
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`);
           const data = await res.json();
           setAddress(data.display_name || '');
-        } catch {
-          // Address is optional, silently fail
-        }
+        } catch { /* silent */ }
       },
-      (err) => {
-        setLocationStatus('error');
-        setError('Could not get location. Please allow location access.');
-      },
+      () => { setLocationStatus('error'); setError('Could not get location. Please allow access.'); },
       { enableHighAccuracy: true, timeout: 10000 }
     );
   };
 
-  // Submit the complaint form
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-
     if (!image) return setError('Please upload a photo of the garbage');
-    if (!location) return setError('Please capture your location first');
-
+    if (!location) return setError('Please capture your GPS location first');
     setSubmitting(true);
     try {
-      // Use FormData for multipart/form-data (required for file upload)
-      const formData = new FormData();
-      formData.append('image', image);
-      formData.append('latitude', location.latitude);
-      formData.append('longitude', location.longitude);
-      formData.append('address', address);
-      formData.append('description', description);
-
-      await api.post('/complaints', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-
+      const fd = new FormData();
+      fd.append('image', image);
+      fd.append('latitude', location.latitude);
+      fd.append('longitude', location.longitude);
+      fd.append('address', address);
+      fd.append('description', description);
+      await api.post('/complaints', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
       setSuccess(true);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to submit complaint');
@@ -108,17 +121,19 @@ export default function ReportPage() {
     }
   };
 
-  // Success screen
+  // ── Success screen ──────────────────────────────────
   if (success) {
     return (
       <div className="min-h-screen">
         <Navbar />
-        <div className="flex items-center justify-center min-h-[80vh] px-4">
-          <div className="text-center animate-fade-in">
-            <div className="text-7xl mb-6">✅</div>
-            <h2 className="font-display text-3xl font-bold text-white mb-3">Report Submitted!</h2>
-            <p className="text-gray-400 mb-8 max-w-sm mx-auto">
-              Your garbage complaint has been registered. The municipal team will take action shortly.
+        <div className="flex items-center justify-center min-h-[82vh] px-4">
+          <div className={`text-center max-w-sm mx-auto p-10 rounded-3xl border ${isDark ? 'bg-dark-800 border-white/5' : 'bg-white border-green-100 shadow-xl'}`}>
+            <div className={`inline-flex items-center justify-center w-24 h-24 rounded-2xl mb-6 ${isDark ? 'bg-brand-500/10 text-brand-400' : 'bg-green-50 text-green-500'}`}>
+              <IconSuccess />
+            </div>
+            <h2 className="font-display text-2xl font-bold page-title mb-2">Report Submitted</h2>
+            <p className={`text-sm mb-8 leading-relaxed ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+              Your garbage complaint has been registered. The municipal team will respond shortly.
             </p>
             <div className="flex gap-3 justify-center">
               <button onClick={() => navigate('/dashboard')} className="btn-primary">
@@ -140,43 +155,72 @@ export default function ReportPage() {
     );
   }
 
+  // ── Step header helper ──────────────────────────────
+  const StepHeader = ({ num, icon, title, subtitle }) => (
+    <div className="flex items-center gap-3 mb-5">
+      <div className={`w-8 h-8 rounded-lg flex items-center justify-center step-badge text-sm font-bold font-mono`}>
+        {num}
+      </div>
+      <div className={`w-8 h-8 flex items-center justify-center ${isDark ? 'text-brand-400' : 'text-green-600'}`}>
+        {icon}
+      </div>
+      <div>
+        <h3 className={`font-display font-semibold text-sm ${isDark ? 'text-white' : 'text-gray-800'}`}>{title}</h3>
+        {subtitle && <p className={`text-xs mt-0.5 ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>{subtitle}</p>}
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen">
       <Navbar />
-      <div className="max-w-2xl mx-auto px-4 py-8">
-        {/* Page header */}
+      <div className="max-w-2xl mx-auto px-4 py-10">
+
+        {/* ── Page header ──────────────────────────── */}
         <div className="mb-8">
-          <h1 className="font-display text-3xl font-bold text-white">Report Garbage</h1>
-          <p className="text-gray-500 mt-1">Upload a photo and share your location to file a complaint</p>
+          <p className={`text-sm font-medium mb-1 ${isDark ? 'text-brand-400' : 'text-green-600'} uppercase tracking-widest font-mono`}>
+            Complaint Form
+          </p>
+          <h1 className="font-display text-4xl font-bold page-title">Report Garbage</h1>
+          <p className="page-subtitle mt-1 text-sm">
+            Upload a photo and share your location to file a complaint with the municipal body.
+          </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Error */}
+        <form onSubmit={handleSubmit} className="space-y-5">
+
+          {/* Error banner */}
           {error && (
-            <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-sm text-red-400">
-              ⚠ {error}
+            <div className={`rounded-xl px-4 py-3 text-sm flex items-center gap-2 ${
+              isDark ? 'bg-red-500/10 border border-red-500/20 text-red-400' : 'bg-red-50 border border-red-200 text-red-600'
+            }`}>
+              <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+              {error}
             </div>
           )}
 
-          {/* Step 1: Image Upload */}
-          <div className="card">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-8 h-8 rounded-full bg-brand-500/15 flex items-center justify-center text-brand-400 font-bold text-sm font-mono">1</div>
-              <h3 className="font-display font-semibold text-white">Upload Photo</h3>
-            </div>
+          {/* ── Step 1: Photo ──────────────────────── */}
+          <div className="card border">
+            <StepHeader num="1" icon={<IconCamera />} title="Upload Photo" subtitle="JPG, PNG or WEBP — max 5MB" />
 
             {preview ? (
-              <div className="relative rounded-xl overflow-hidden aspect-video bg-dark-700">
+              <div className={`relative rounded-xl overflow-hidden aspect-video ${isDark ? 'bg-dark-700' : 'bg-gray-100'}`}>
                 <img src={preview} alt="Preview" className="w-full h-full object-cover" />
                 <button
                   type="button"
                   onClick={() => { setImage(null); setPreview(null); }}
-                  className="absolute top-3 right-3 w-8 h-8 rounded-full bg-dark-900/80 flex items-center justify-center text-gray-300 hover:text-red-400 transition-colors"
+                  className={`absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                    isDark ? 'bg-dark-900/80 text-gray-300 hover:text-red-400' : 'bg-white/90 text-gray-500 hover:text-red-500 shadow'
+                  }`}
                 >
-                  ✕
+                  <IconX />
                 </button>
-                <div className="absolute bottom-3 left-3 bg-dark-900/70 backdrop-blur-sm rounded-lg px-3 py-1 text-xs text-gray-300">
-                  📷 {image?.name}
+                <div className={`absolute bottom-3 left-3 backdrop-blur-sm rounded-lg px-3 py-1 text-xs ${
+                  isDark ? 'bg-dark-900/70 text-gray-300' : 'bg-white/80 text-gray-600'
+                }`}>
+                  {image?.name}
                 </div>
               </div>
             ) : (
@@ -184,43 +228,48 @@ export default function ReportPage() {
                 onClick={() => fileInputRef.current.click()}
                 onDrop={handleDrop}
                 onDragOver={(e) => e.preventDefault()}
-                className="border-2 border-dashed border-white/10 hover:border-brand-500/40 rounded-xl p-10 text-center cursor-pointer transition-colors group"
+                className="drop-zone border-2 border-dashed rounded-xl p-10 text-center cursor-pointer transition-all group"
               >
-                <div className="text-4xl mb-3 group-hover:scale-110 transition-transform">📸</div>
-                <p className="text-gray-300 font-medium">Click or drag & drop an image</p>
-                <p className="text-gray-600 text-sm mt-1">JPG, PNG, WEBP — max 5MB</p>
+                <div className={`inline-flex items-center justify-center w-14 h-14 rounded-xl mb-3 transition-transform group-hover:scale-105 ${
+                  isDark ? 'bg-dark-700 text-gray-500' : 'bg-green-50 text-green-400'
+                }`}>
+                  <IconCamera />
+                </div>
+                <p className={`font-medium text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                  Click to upload or drag &amp; drop
+                </p>
+                <p className={`text-xs mt-1 ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>
+                  JPG, PNG, WEBP — max 5MB
+                </p>
               </div>
             )}
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleImageChange}
-              className="hidden"
-            />
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
           </div>
 
-          {/* Step 2: Location */}
-          <div className="card">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-8 h-8 rounded-full bg-brand-500/15 flex items-center justify-center text-brand-400 font-bold text-sm font-mono">2</div>
-              <h3 className="font-display font-semibold text-white">Capture Location</h3>
-            </div>
+          {/* ── Step 2: Location ───────────────────── */}
+          <div className="card border">
+            <StepHeader num="2" icon={<IconPin />} title="Capture Location" subtitle="We'll use your device's GPS" />
 
             {locationStatus === 'success' ? (
-              <div className="bg-brand-500/10 border border-brand-500/20 rounded-xl p-4">
+              <div className={`rounded-xl p-4 ${isDark ? 'bg-brand-500/8 border border-brand-500/15' : 'bg-green-50 border border-green-200'}`}>
                 <div className="flex items-start gap-3">
-                  <span className="text-brand-400 text-xl">📍</span>
-                  <div>
-                    {address && <p className="text-gray-200 text-sm font-medium">{address}</p>}
-                    <p className="text-gray-500 text-xs font-mono mt-1">
+                  <div className={`mt-0.5 flex-shrink-0 ${isDark ? 'text-brand-400' : 'text-green-500'}`}>
+                    <IconPin />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    {address && (
+                      <p className={`text-sm font-medium leading-snug ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>
+                        {address}
+                      </p>
+                    )}
+                    <p className={`text-xs font-mono mt-1 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
                       {location.latitude.toFixed(6)}, {location.longitude.toFixed(6)}
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={() => { setLocation(null); setLocationStatus('idle'); setAddress(''); }}
-                    className="ml-auto text-gray-500 hover:text-red-400 transition-colors text-xs"
+                    className={`text-xs font-medium transition-colors flex-shrink-0 ${isDark ? 'text-gray-500 hover:text-red-400' : 'text-gray-400 hover:text-red-500'}`}
                   >
                     Reset
                   </button>
@@ -234,54 +283,61 @@ export default function ReportPage() {
                 className="btn-secondary w-full flex items-center justify-center gap-2"
               >
                 {locationStatus === 'loading' ? (
-                  <>
-                    <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                    </svg>
-                    Getting your location...
-                  </>
+                  <><IconSpinner /> Getting your location...</>
                 ) : (
-                  <>
-                    <span>📍</span>
-                    Use My Current Location (GPS)
-                  </>
+                  <><IconPin /> Use My Current Location</>
                 )}
               </button>
             )}
           </div>
 
-          {/* Step 3: Description */}
-          <div className="card">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-8 h-8 rounded-full bg-brand-500/15 flex items-center justify-center text-brand-400 font-bold text-sm font-mono">3</div>
-              <h3 className="font-display font-semibold text-white">Description <span className="text-gray-600 font-normal text-sm">(optional)</span></h3>
-            </div>
+          {/* ── Step 3: Description ────────────────── */}
+          <div className="card border">
+            <StepHeader
+              num="3"
+              icon={<IconText />}
+              title="Description"
+              subtitle="Optional — help the team understand the issue"
+            />
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Describe the garbage situation (e.g., large pile near bus stop, overflowing dustbin...)"
+              placeholder="Describe the situation — e.g. large pile near the bus stop, overflowing bin, construction debris..."
               rows={3}
-              className="input resize-none"
+              className="input resize-none text-sm"
             />
           </div>
 
-          {/* Submit */}
+          {/* ── Completion checklist ───────────────── */}
+          <div className={`rounded-xl px-5 py-4 flex items-center gap-6 text-xs font-mono ${
+            isDark ? 'bg-dark-700/50' : 'bg-green-50 border border-green-100'
+          }`}>
+            {[
+              { done: !!image,    label: 'Photo' },
+              { done: !!location, label: 'Location' },
+              { done: true,       label: 'Description' },
+            ].map(({ done, label }) => (
+              <span key={label} className={`flex items-center gap-1.5 ${
+                done
+                  ? (isDark ? 'text-brand-400' : 'text-green-600')
+                  : (isDark ? 'text-gray-600' : 'text-gray-400')
+              }`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${done ? (isDark ? 'bg-brand-400' : 'bg-green-500') : (isDark ? 'bg-gray-600' : 'bg-gray-300')}`} />
+                {label}
+              </span>
+            ))}
+          </div>
+
+          {/* ── Submit ─────────────────────────────── */}
           <button
             type="submit"
             disabled={submitting || !image || !location}
-            className="btn-primary w-full text-base py-4 flex items-center justify-center gap-2"
+            className="btn-primary w-full py-4 flex items-center justify-center gap-2 text-base"
           >
             {submitting ? (
-              <>
-                <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-                Submitting complaint...
-              </>
+              <><IconSpinner /> Submitting complaint...</>
             ) : (
-              <>🚨 Submit Garbage Report</>
+              <><IconUpload /> Submit Garbage Report</>
             )}
           </button>
         </form>

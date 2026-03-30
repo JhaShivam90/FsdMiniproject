@@ -140,9 +140,9 @@ export default function UserDashboard() {
           {statCards.map(stat => (
             <div key={stat.label} className={`card ${stat.cardCls} border`}>
               <div className="flex items-center justify-between mb-3">
-                <span className={`w-9 h-9 rounded-lg flex items-center justify-center ${stat.iconBg}`}>
+                {/* <span className={`w-9 h-9 rounded-lg flex items-center justify-center ${stat.iconBg}`}>
                   {stat.icon}
-                </span>
+                </span> */}
                 <span className={`text-xs font-mono uppercase tracking-widest ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>
                   {stat.label}
                 </span>

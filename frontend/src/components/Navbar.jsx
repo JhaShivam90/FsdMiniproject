@@ -26,11 +26,11 @@ export default function Navbar() {
 
           {/* Logo */}
           <Link to={isAdmin ? '/admin' : '/dashboard'} className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-brand-500 flex items-center justify-center text-lg">
-              🗑️
+            <div className="w-12 h-12 rounded-lg bg-brand-500 flex items-center justify-center text-lg">
+              <img src="https://images.scalebranding.com/leaf-tech-logo-5e84d08d-8872-497f-a568-a91e870978c6.jpg" alt="logo" />
             </div>
             <span className="font-display font-bold tracking-tight" style={{ color: isDark ? '#fff' : '#14532d' }}>
-              Smart<span className="text-brand-400">Garbage</span>
+              Swachh<span className="text-brand-400">Net</span>
             </span>
           </Link>
 

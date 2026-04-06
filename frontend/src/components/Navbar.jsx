@@ -71,6 +71,17 @@ export default function Navbar() {
                 </Link>
               </>
             )}
+            
+            <Link
+              to="/authorities"
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                location.pathname === '/authorities'
+                  ? 'bg-brand-500/15 text-brand-400'
+                  : isDark ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-800'
+              }`}
+            >
+              Authorities
+            </Link>
           </div>
 
           {/* Right side: user info + theme toggle + logout */}

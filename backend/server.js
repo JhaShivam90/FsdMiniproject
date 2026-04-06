@@ -25,8 +25,14 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/complaints', require('./routes/complaints'));
+// Import Routes
+const authRoutes = require('./routes/auth');
+const complaintRoutes = require('./routes/complaints');
+const authorityRoutes = require('./routes/authorityRoutes');
+
+app.use('/api/auth', authRoutes);
+app.use('/api/complaints', complaintRoutes);
+app.use('/api/authorities', authorityRoutes);
 
 // Health check endpoint
 app.get('/', (req, res) => {

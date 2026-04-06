@@ -60,6 +60,25 @@ const complaintSchema = new mongoose.Schema(
     userName: {
       type: String,
     },
+
+    // Reference to the assigned authority (admin)
+    authorityId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+
+    // Rating given by user once resolved
+    rating: {
+      type: Number,
+      min: 1,
+      max: 5,
+    },
+    ratingComment: {
+      type: String,
+      trim: true,
+      default: '',
+    },
   },
   { timestamps: true } // adds createdAt and updatedAt automatically
 );

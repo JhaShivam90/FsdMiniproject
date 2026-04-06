@@ -11,6 +11,7 @@ import RegisterPage from './pages/RegisterPage';
 import UserDashboard from './pages/UserDashboard';
 import ReportPage from './pages/ReportPage';
 import AdminDashboard from './pages/AdminDashboard';
+import AuthoritiesPage from './pages/AuthoritiesPage';
 
 const ProtectedRoute = ({ children }) => {
   const { user } = useAuth();
@@ -38,6 +39,7 @@ function AppRoutes() {
       <Route path="/register"  element={<GuestRoute><RegisterPage /></GuestRoute>} />
       <Route path="/dashboard" element={<ProtectedRoute><UserDashboard /></ProtectedRoute>} />
       <Route path="/report"    element={<ProtectedRoute><ReportPage /></ProtectedRoute>} />
+      <Route path="/authorities" element={<AuthoritiesPage />} />
       <Route path="/admin"     element={<AdminRoute><AdminDashboard /></AdminRoute>} />
       <Route path="*"          element={<Navigate to="/login" replace />} />
     </Routes>

@@ -12,7 +12,7 @@ const Complaint = require('../models/Complaint');
  */
 const createComplaint = async (req, res) => {
   try {
-    const { latitude, longitude, address, description } = req.body;
+    const { latitude, longitude, address, description, authorityId } = req.body;
 
     // Image file is uploaded via Multer → Cloudinary (see middleware/upload.js)
     if (!req.file) {
@@ -21,6 +21,10 @@ const createComplaint = async (req, res) => {
 
     if (!latitude || !longitude) {
       return res.status(400).json({ success: false, message: 'Location is required' });
+    }
+
+    if (!authorityId) {
+      return res.status(400).json({ success: false, message: 'Authority ID is required' });
     }
 
     const complaint = await Complaint.create({
@@ -34,6 +38,7 @@ const createComplaint = async (req, res) => {
       description: description || '',
       userId: req.user._id,
       userName: req.user.name,
+      authorityId,
     });
 
     res.status(201).json({
@@ -67,7 +72,7 @@ const getUserComplaints = async (req, res) => {
 
 /**
  * GET /api/complaints/all
- * Returns ALL complaints (admin only). Supports ?status= filter.
+ * Returns complaints formatted by role (admin sees only theirs, superadmin sees all - wait, we just map admin to their authorityId)
  */
 const getAllComplaints = async (req, res) => {
   try {
@@ -75,6 +80,11 @@ const getAllComplaints = async (req, res) => {
 
     const filter = {};
     if (status) filter.status = status;
+    
+    // If the user is an admin (authority), only show complaints assigned to them
+    if (req.user.role === 'admin') {
+      filter.authorityId = req.user._id;
+    }
 
     const complaints = await Complaint.find(filter)
       .populate('userId', 'name email') // Include user's name and email

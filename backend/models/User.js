@@ -30,9 +30,33 @@ const userSchema = new mongoose.Schema(
       enum: ['user', 'admin'],
       default: 'user', // Regular users by default
     },
+    authorityDetails: {
+      name: { type: String },
+      location: {
+        // GeoJSON for $near queries
+        type: {
+          type: String,
+          enum: ['Point'],
+          default: 'Point',
+        },
+        coordinates: {
+          type: [Number], // [longitude, latitude] required for GeoJSON
+          default: [0, 0],
+        },
+        address: { type: String, default: '' },
+      },
+      rating: {
+        score: { type: Number, default: 0 },
+        count: { type: Number, default: 0 },
+      },
+    },
   },
   { timestamps: true }
 );
+
+// Geospatial index for nearby authorities
+userSchema.index({ 'authorityDetails.location': '2dsphere' });
+
 
 // Hash password BEFORE saving to database (pre-save hook)
 userSchema.pre('save', async function (next) {

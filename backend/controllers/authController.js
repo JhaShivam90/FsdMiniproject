@@ -17,11 +17,12 @@ const generateToken = (id) => {
  */
 const register = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, role, authorityName, latitude, longitude, address } = req.body;
 
     // Basic validation
+    // Require email and password at minimum. Name is required by model.
     if (!name || !email || !password) {
-      return res.status(400).json({ success: false, message: 'All fields are required' });
+      return res.status(400).json({ success: false, message: 'Name, email, and password are required' });
     }
 
     if (password.length < 6) {
@@ -34,8 +35,27 @@ const register = async (req, res) => {
       return res.status(409).json({ success: false, message: 'Email already registered' });
     }
 
+    const userData = { name, email, password };
+
+    if (role === 'admin') {
+      userData.role = 'admin';
+      if (latitude && longitude) {
+        userData.authorityDetails = {
+          name: authorityName || name,
+          location: {
+            type: 'Point',
+            coordinates: [parseFloat(longitude), parseFloat(latitude)],
+            address: address || '',
+          },
+          rating: { score: 0, count: 0 },
+        };
+      } else {
+        return res.status(400).json({ success: false, message: 'Location is required for an Authority account' });
+      }
+    }
+
     // Create user (password is hashed in the model's pre-save hook)
-    const user = await User.create({ name, email, password });
+    const user = await User.create(userData);
 
     res.status(201).json({
       success: true,

@@ -12,7 +12,7 @@ import { useTheme } from '../context/ThemeContext';
 import Navbar from '../components/Navbar';
 import ComplaintCard from '../components/ComplaintCard';
 import ComplaintsMap from '../components/ComplaintsMap';
-import AchievementsPanel from '../components/AchievementsPanel';
+import AchievementsPanel from '../components/Achievementspanel';
 import { calcPoints, getLevel } from '../utils/rewards';
 import api from '../utils/api';
 

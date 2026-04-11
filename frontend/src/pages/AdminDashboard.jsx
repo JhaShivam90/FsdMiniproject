@@ -81,11 +81,17 @@ export default function AdminDashboard() {
   const handleStatusChange = async (id, newStatus) => {
     setUpdating(id);
     try {
-      await api.patch(`/complaints/${id}`, { status: newStatus });
-      setComplaints(prev => prev.map(c => c._id === id ? { ...c, status: newStatus } : c));
-      showToast(`Status updated to "${newStatus}"`, 'success');
-    } catch {
-      showToast('Failed to update status', 'error');
+      if (newStatus === 'assigned') {
+        const res = await api.post(`/complaints/${id}/assign-truck`);
+        setComplaints(prev => prev.map(c => c._id === id ? { ...c, status: newStatus, workerId: res.data.complaint.workerId } : c));
+        showToast(res.data.message || `Status updated to "${newStatus}"`, 'success');
+      } else if (newStatus === 'resolved') {
+        await api.patch(`/complaints/${id}/verify`);
+        setComplaints(prev => prev.map(c => c._id === id ? { ...c, status: newStatus } : c));
+        showToast(`Verification complete. Status updated to "${newStatus}"`, 'success');
+      }
+    } catch(err) {
+      showToast(err.response?.data?.message || 'Failed to update status', 'error');
     } finally {
       setUpdating(null);
     }
@@ -109,7 +115,7 @@ export default function AdminDashboard() {
   const statCards = [
     { label: 'Total',    value: stats.total,    icon: <IconClipboard />, valueColor: isDark ? 'text-gray-200' : 'text-slate-700', iconBg: isDark ? 'bg-gray-700/50 text-gray-400' : 'bg-slate-100 text-slate-500', cardCls: 'stat-card-total' },
     { label: 'Open',     value: stats.open,     icon: <IconAlert />,     valueColor: isDark ? 'text-red-400' : 'text-red-600',    iconBg: isDark ? 'bg-red-500/10 text-red-400'   : 'bg-red-50 text-red-500',    cardCls: 'stat-card-open' },
-    { label: 'Assigned', value: stats.assigned, icon: <IconTruck />,     valueColor: isDark ? 'text-amber-400' : 'text-amber-600', iconBg: isDark ? 'bg-amber-500/10 text-amber-400' : 'bg-amber-50 text-amber-500', cardCls: 'stat-card-assigned' },
+    { label: 'Pending / Assigned', value: stats.assigned + (complaints.filter(c => c.status === 'pending_verification').length), icon: <IconTruck />,     valueColor: isDark ? 'text-amber-400' : 'text-amber-600', iconBg: isDark ? 'bg-amber-500/10 text-amber-400' : 'bg-amber-50 text-amber-500', cardCls: 'stat-card-assigned' },
     { label: 'Resolved', value: stats.resolved, icon: <IconCheck />,     valueColor: isDark ? 'text-brand-400' : 'text-green-600', iconBg: isDark ? 'bg-brand-500/10 text-brand-400' : 'bg-green-50 text-green-600', cardCls: 'stat-card-resolved' },
   ];
 
@@ -208,7 +214,7 @@ export default function AdminDashboard() {
                   filter === s ? 'filter-pill-active' : 'filter-pill-inactive'
                 }`}
               >
-                {s}&nbsp;<span className="opacity-60">{s === 'all' ? stats.total : (stats[s] || 0)}</span>
+                {s}&nbsp;<span className="opacity-60">{s === 'all' ? stats.total : complaints.filter(c => c.status === s).length}</span>
               </button>
             ))}
           </div>

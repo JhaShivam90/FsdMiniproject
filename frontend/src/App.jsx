@@ -11,6 +11,7 @@ import RegisterPage from './pages/RegisterPage';
 import UserDashboard from './pages/UserDashboard';
 import ReportPage from './pages/ReportPage';
 import AdminDashboard from './pages/AdminDashboard';
+import WorkerDashboard from './pages/WorkerDashboard';
 import AuthoritiesPage from './pages/AuthoritiesPage';
 
 const ProtectedRoute = ({ children }) => {
@@ -25,9 +26,20 @@ const AdminRoute = ({ children }) => {
   return children;
 };
 
+const WorkerRoute = ({ children }) => {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" replace />;
+  if (user.role !== 'worker') return <Navigate to="/dashboard" replace />;
+  return children;
+};
+
 const GuestRoute = ({ children }) => {
   const { user } = useAuth();
-  if (user) return <Navigate to={user.role === 'admin' ? '/admin' : '/dashboard'} replace />;
+  if (user) {
+    if (user.role === 'admin') return <Navigate to="/admin" replace />;
+    if (user.role === 'worker') return <Navigate to="/worker" replace />;
+    return <Navigate to="/dashboard" replace />;
+  }
   return children;
 };
 
@@ -41,6 +53,7 @@ function AppRoutes() {
       <Route path="/report"    element={<ProtectedRoute><ReportPage /></ProtectedRoute>} />
       <Route path="/authorities" element={<AuthoritiesPage />} />
       <Route path="/admin"     element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+      <Route path="/worker"    element={<WorkerRoute><WorkerDashboard /></WorkerRoute>} />
       <Route path="*"          element={<Navigate to="/login" replace />} />
     </Routes>
   );

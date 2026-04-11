@@ -61,7 +61,7 @@ export default function LoginPage() {
       const res = await api.post('/auth/login', form);
       const { token, user } = res.data;
       login(token, user);
-      navigate(user.role === 'admin' ? '/admin' : '/dashboard');
+      navigate(user.role === 'admin' ? '/admin' : user.role === 'worker' ? '/worker' : '/dashboard');
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed. Please try again.');
     } finally {

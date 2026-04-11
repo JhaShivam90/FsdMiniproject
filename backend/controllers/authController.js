@@ -17,7 +17,7 @@ const generateToken = (id) => {
  */
 const register = async (req, res) => {
   try {
-    const { name, email, password, role, authorityName, latitude, longitude, address } = req.body;
+    const { name, email, password, role, authorityName, latitude, longitude, address, garageName, truckNumber } = req.body;
 
     // Basic validation
     // Require email and password at minimum. Name is required by model.
@@ -51,6 +51,21 @@ const register = async (req, res) => {
         };
       } else {
         return res.status(400).json({ success: false, message: 'Location is required for an Authority account' });
+      }
+    } else if (role === 'worker') {
+      userData.role = 'worker';
+      if (latitude && longitude && garageName && truckNumber) {
+        userData.workerDetails = {
+          truckNumber,
+          garageName,
+          location: {
+            type: 'Point',
+            coordinates: [parseFloat(longitude), parseFloat(latitude)],
+          },
+          status: 'idle'
+        };
+      } else {
+        return res.status(400).json({ success: false, message: 'Location, garage name, and truck number are required for Worker' });
       }
     }
 

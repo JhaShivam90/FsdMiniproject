@@ -38,7 +38,7 @@ const complaintSchema = new mongoose.Schema(
     // Complaint lifecycle status
     status: {
       type: String,
-      enum: ['open', 'assigned', 'resolved'],
+      enum: ['open', 'assigned', 'pending_verification', 'resolved'],
       default: 'open',
     },
 
@@ -66,6 +66,20 @@ const complaintSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
+    },
+
+    // Reference to the assigned worker (truck)
+    workerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
+
+    // Optional Cloudinary URL for the cleanup proof image
+    afterImageUrl: {
+      type: String,
+    },
+    afterImagePublicId: {
+      type: String,
     },
 
     // Rating given by user once resolved

@@ -7,10 +7,10 @@ import StatusBadge from './StatusBadge';
 import api from '../utils/api';
 
 const IconStar = ({ fill = "currentColor", className = "w-5 h-5", onClick, onMouseEnter, onMouseLeave }) => (
-  <svg 
-    className={`cursor-pointer transition-colors ${className}`} 
-    fill={fill} 
-    stroke="currentColor" 
+  <svg
+    className={`cursor-pointer transition-colors ${className}`}
+    fill={fill}
+    stroke="currentColor"
     viewBox="0 0 24 24"
     onClick={onClick}
     onMouseEnter={onMouseEnter}
@@ -31,14 +31,13 @@ export default function ComplaintCard({ complaint, onStatusChange, isAdmin }) {
   });
 
   const nextStatus = {
-    open: 'assigned',
-    assigned: 'resolved',
-    resolved: null,
+    open: 'assigned', // triggers auto assign truck endpoint
+    pending_verification: 'resolved', // triggers verify endpoint
   };
 
   const nextLabel = {
-    open: '🚛 Assign Truck',
-    assigned: '✓ Mark Resolved',
+    open: 'Auto-Assign Truck',
+    pending_verification: 'Verify & Resolve',
   };
 
   const handleRate = async (stars) => {
@@ -51,7 +50,7 @@ export default function ComplaintCard({ complaint, onStatusChange, isAdmin }) {
       });
       setLocalRating(stars);
       setRatingOpen(false);
-    } catch(e) {
+    } catch (e) {
       alert(e.response?.data?.message || 'Failed to submit rating');
     } finally {
       setSubmittingRating(false);
@@ -61,16 +60,28 @@ export default function ComplaintCard({ complaint, onStatusChange, isAdmin }) {
   return (
     <div className="card hover:border-brand-700/30 transition-all duration-200 animate-slide-up relative overflow-hidden">
       {/* Image */}
-      <div className="relative mb-4 rounded-xl overflow-hidden bg-gray-100 dark:bg-dark-700 aspect-video">
-        <img
-          src={complaint.imageUrl}
-          alt="Garbage complaint"
-          className="w-full h-full object-cover"
-          onError={(e) => {
-            e.target.src = 'https://via.placeholder.com/400x225?text=Image+Not+Found';
-          }}
-        />
-        <div className="absolute top-2 right-2 flex gap-2">
+      <div className={`relative mb-4 rounded-xl overflow-hidden bg-gray-100 dark:bg-dark-700 aspect-video flex`}>
+        <div className={`relative h-full ${complaint.afterImageUrl ? 'w-1/2 border-r border-gray-800' : 'w-full'}`}>
+          <img
+            src={complaint.imageUrl}
+            alt="Garbage complaint before"
+            className="w-full h-full object-cover"
+            onError={(e) => { e.target.src = 'https://via.placeholder.com/400x225?text=Before+Image+Not+Found'; }}
+          />
+          {complaint.afterImageUrl && <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-md px-1 py-0.5 rounded text-[10px] uppercase font-bold text-white tracking-widest">Before</div>}
+        </div>
+        {complaint.afterImageUrl && (
+          <div className={`relative h-full w-1/2`}>
+            <img
+              src={complaint.afterImageUrl}
+              alt="Garbage complaint after"
+              className="w-full h-full object-cover"
+              onError={(e) => { e.target.src = 'https://via.placeholder.com/400x225?text=After+Image+Not+Found'; }}
+            />
+            <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-md px-1 py-0.5 rounded text-[10px] uppercase font-bold text-white tracking-widest">After</div>
+          </div>
+        )}
+        <div className="absolute top-2 right-2 flex gap-2 z-10">
           {localRating && (
             <div className="bg-white/90 dark:bg-dark-900/90 backdrop-blur-sm text-yellow-500 rounded-full px-2 py-0.5 flex items-center gap-1 text-xs font-bold border border-yellow-500/20 shadow-sm">
               <IconStar className="w-3 h-3" /> {localRating}
@@ -101,6 +112,13 @@ export default function ComplaintCard({ complaint, onStatusChange, isAdmin }) {
         {/* Description */}
         {complaint.description && (
           <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{complaint.description}</p>
+        )}
+
+        {/* Assigned Truck Info */}
+        {complaint.workerId && complaint.workerId.workerDetails?.truckNumber && (
+          <div className="flex items-center gap-1.5 text-sm text-amber-600 dark:text-amber-500 font-mono bg-amber-50 dark:bg-amber-500/10 p-1.5 rounded w-max">
+            <span>{complaint.workerId.workerDetails.truckNumber}</span>
+          </div>
         )}
 
         {/* Reporter (admin view) */}

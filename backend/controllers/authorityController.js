@@ -15,7 +15,7 @@ const getNearbyAuthorities = async (req, res) => {
 
     lat = parseFloat(lat);
     lng = parseFloat(lng);
-    limit = parseInt(limit) || 10;
+    limit = parseInt(limit) || 3;
 
     // Use MongoDB geospatial $near query
     const authorities = await User.find({

@@ -27,7 +27,7 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['user', 'admin'],
+      enum: ['user', 'admin', 'worker'],
       default: 'user', // Regular users by default
     },
     authorityDetails: {
@@ -50,12 +50,35 @@ const userSchema = new mongoose.Schema(
         count: { type: Number, default: 0 },
       },
     },
+    // Only used if role is 'worker' (Truck Driver)
+    workerDetails: {
+      truckNumber: { type: String },
+      garageName: { type: String },
+      location: {
+        // GeoJSON for $near queries
+        type: {
+          type: String,
+          enum: ['Point'],
+          default: 'Point',
+        },
+        coordinates: {
+          type: [Number], // [longitude, latitude] required for GeoJSON
+          default: [0, 0],
+        },
+      },
+      status: {
+        type: String,
+        enum: ['idle', 'busy'],
+        default: 'idle',
+      },
+    },
   },
   { timestamps: true }
 );
 
-// Geospatial index for nearby authorities
+// Geospatial index for nearby authorities & trucks
 userSchema.index({ 'authorityDetails.location': '2dsphere' });
+userSchema.index({ 'workerDetails.location': '2dsphere' });
 
 
 // Hash password BEFORE saving to database (pre-save hook)

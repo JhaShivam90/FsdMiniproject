@@ -13,7 +13,7 @@ import Navbar from '../components/Navbar';
 import ComplaintCard from '../components/ComplaintCard';
 import ComplaintsMap from '../components/ComplaintsMap';
 import AchievementsPanel from '../components/AchievementsPanel';
-import { calcPoints, getLevel } from '../utils/rewards';
+import { calcPoints, getLevel } from '../utils/Rewards';
 import api from '../utils/api';
 
 const STATUS_FILTERS = ['all', 'open', 'assigned', 'resolved'];

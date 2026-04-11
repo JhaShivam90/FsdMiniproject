@@ -4,7 +4,7 @@
  * Pure frontend — derives everything from the complaints array.
  */
 
-import { calcPoints, getLevel, getLevelProgress, getNextLevel, getBadges, ptsToNextLevel, POINTS } from '../utils/rewards';
+import { calcPoints, getLevel, getLevelProgress, getNextLevel, getBadges, ptsToNextLevel, POINTS } from '../utils/Rewards';
 import { useTheme } from '../context/ThemeContext';
 
 // ── SVG badge icons ──────────────────────────────────────────────────────────

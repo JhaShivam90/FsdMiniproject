@@ -139,7 +139,6 @@ export default function WorkerDashboard() {
                             <input 
                               type="file" 
                               accept="image/*" 
-                              capture="environment"
                               className="hidden" 
                               ref={el => fileInputRef.current[c._id] = el}
                               onChange={(e) => handleUploadSubmit(c._id, e.target.files[0])}

@@ -6,7 +6,6 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import LocationPickerMap from '../components/LocationPickerMap';
 import api from '../utils/api';
 
 const IconSpinner = () => (
@@ -59,10 +58,6 @@ const BrandMark = ({ isDark }) => (
 
 export default function RegisterPage() {
   const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '' });
-  const [role, setRole] = useState('user');
-  const [authorityName, setAuthorityName] = useState('');
-  const [location, setLocation] = useState(null);
-  const [address, setAddress] = useState('');
   
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -77,19 +72,7 @@ export default function RegisterPage() {
     setError('');
   };
 
-  const reverseGeocode = async (lat, lng) => {
-    try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
-      const data = await res.json();
-      setAddress(data.display_name || '');
-    } catch { /* silent */ }
-  };
 
-  useEffect(() => {
-    if (location && role === 'admin') {
-      reverseGeocode(location.latitude, location.longitude);
-    }
-  }, [location, role]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -97,25 +80,14 @@ export default function RegisterPage() {
     if (form.password !== form.confirmPassword) return setError('Passwords do not match');
     if (form.password.length < 6) return setError('Password must be at least 6 characters');
     
-    if (role === 'admin' && !location) {
-      return setError('Please pick your office location on the map');
-    }
-
     setLoading(true);
     try {
       const payload = {
         name: form.name,
         email: form.email,
         password: form.password,
-        role: role,
+        role: 'user',
       };
-
-      if (role === 'admin') {
-        payload.authorityName = authorityName || form.name;
-        payload.latitude = location.latitude;
-        payload.longitude = location.longitude;
-        payload.address = address;
-      }
 
       const res = await api.post('/auth/register', payload);
       login(res.data.token, res.data.user);
@@ -167,31 +139,7 @@ export default function RegisterPage() {
         }`}>
           <form onSubmit={handleSubmit} className="space-y-5">
             
-            {/* Account Type Toggle */}
-            <div className={`flex rounded-xl p-1 mb-6 border ${isDark ? 'bg-dark-900/50 border-gray-800' : 'bg-gray-50 border-gray-200'}`}>
-              <button
-                type="button"
-                onClick={() => setRole('user')}
-                className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
-                  role === 'user' 
-                    ? (isDark ? 'bg-brand-500 text-white shadow' : 'bg-green-500 text-white shadow')
-                    : (isDark ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700')
-                }`}
-              >
-                Citizen
-              </button>
-              <button
-                type="button"
-                onClick={() => setRole('admin')}
-                className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
-                  role === 'admin' 
-                    ? (isDark ? 'bg-brand-500 text-white shadow' : 'bg-green-500 text-white shadow')
-                    : (isDark ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700')
-                }`}
-              >
-                Authority
-              </button>
-            </div>
+
 
             {/* Error */}
             {error && (
@@ -210,7 +158,7 @@ export default function RegisterPage() {
             {/* Name */}
             <div>
               <label className={`block text-sm font-medium mb-1.5 ${labelCls}`}>
-                {role === 'admin' ? 'Account Manager Name' : 'Full Name'}
+                Full Name
               </label>
               <input
                 type="text"
@@ -237,37 +185,7 @@ export default function RegisterPage() {
               />
             </div>
 
-            {/* Authority Extra Fields */}
-            {role === 'admin' && (
-              <div className={`p-4 rounded-xl border space-y-4 mb-4 ${isDark ? 'bg-dark-900 border-gray-800' : 'bg-gray-50 border-gray-200'}`}>
-                <p className={`text-xs font-semibold uppercase tracking-wider mb-2 ${isDark ? 'text-brand-400' : 'text-green-600'}`}>
-                  Authority Details
-                </p>
-                <div>
-                  <label className={`block text-sm font-medium mb-1.5 ${labelCls}`}>Office / Authority Name</label>
-                  <input
-                    type="text"
-                    value={authorityName}
-                    onChange={e => setAuthorityName(e.target.value)}
-                    placeholder="e.g. North Zone Municipality"
-                    className="input"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className={`block text-sm font-medium mb-1.5 ${labelCls}`}>Service Location</label>
-                  <LocationPickerMap location={location} setLocation={setLocation} />
-                  {address && (
-                    <p className={`mt-2 text-xs font-mono p-2 rounded border ${isDark ? 'bg-dark-800 border-gray-700 text-gray-400' : 'bg-white border-gray-200 text-gray-500'}`}>
-                      {address}
-                    </p>
-                  )}
-                  <p className={`text-xs mt-2 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
-                    Click to drop a pin on your office location.
-                  </p>
-                </div>
-              </div>
-            )}
+
 
             {/* Password + strength meter */}
             <div>

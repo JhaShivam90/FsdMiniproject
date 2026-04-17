@@ -292,7 +292,7 @@ export default function ReportPage() {
                 </p>
               </div>
             )}
-            <input ref={fileInputRef} type="file" accept="image/*" capture="environment" onChange={handleImageChange} className="hidden" />
+            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
           </div>
 
           {/* ── Step 2: Location ───────────────────── */}

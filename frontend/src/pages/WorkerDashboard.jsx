@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import Navbar from '../components/Navbar';
-import CameraCapture from '../components/CameraCapture';
 import api from '../utils/api';
 
 const IconSpinner = () => (
@@ -136,14 +135,26 @@ export default function WorkerDashboard() {
                       {/* Action Area */}
                       <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-800">
                         {isAssigned && (
-                          <div className="mt-4">
-                            {uploadingId === c._id ? (
-                              <div className="flex items-center gap-2 text-brand-500 font-medium">
-                                <IconSpinner /> Uploading proof...
-                              </div>
-                            ) : (
-                              <CameraCapture onCapture={(file) => handleUploadSubmit(c._id, file)} isDark={isDark} />
-                            )}
+                          <div className="flex items-center gap-3">
+                            <input 
+                              type="file" 
+                              accept="image/*" 
+                              capture="environment"
+                              className="hidden" 
+                              ref={el => fileInputRef.current[c._id] = el}
+                              onChange={(e) => handleUploadSubmit(c._id, e.target.files[0])}
+                            />
+                            <button 
+                              onClick={() => fileInputRef.current[c._id].click()}
+                              disabled={uploadingId === c._id}
+                              className="btn-primary w-full sm:w-auto"
+                            >
+                              {uploadingId === c._id ? (
+                                <span className="flex items-center gap-2"><IconSpinner /> Uploading...</span>
+                              ) : (
+                                'Click After Photo & Submit'
+                              )}
+                            </button>
                           </div>
                         )}
 

@@ -130,10 +130,10 @@ export default function ComplaintCard({ complaint, onStatusChange, isAdmin }) {
               const isActive = currentVal === step.val;
               return (
                 <div key={step.id} className="flex flex-col items-center gap-1.5 w-12 cursor-default" title={step.label}>
-                  <div className={`w-1.5 h-1.5 rounded-full ring-4 transition-all ${
+                  <div className={`w-2 h-2 rounded-full transition-all ${
                     isCompleted 
-                      ? 'bg-green-500 ring-white dark:ring-dark-800' 
-                      : 'bg-gray-300 dark:bg-gray-600 ring-white dark:ring-dark-800'
+                      ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]' 
+                      : 'bg-gray-300 dark:bg-gray-600'
                   }`} />
                   {isActive && <span className="absolute -bottom-4 text-green-600 dark:text-green-400 font-bold whitespace-nowrap">{step.label}</span>}
                 </div>

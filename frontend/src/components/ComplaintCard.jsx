@@ -87,7 +87,7 @@ export default function ComplaintCard({ complaint, onStatusChange, isAdmin }) {
               <IconStar className="w-3 h-3" /> {localRating}
             </div>
           )}
-          <StatusBadge status={complaint.status} />
+          {/* <StatusBadge status={complaint.status} /> */}
         </div>
       </div>
 
@@ -107,6 +107,40 @@ export default function ComplaintCard({ complaint, onStatusChange, isAdmin }) {
               {complaint.location?.latitude?.toFixed(5)}, {complaint.location?.longitude?.toFixed(5)}
             </p>
           </div>
+        </div>
+
+        {/* Progress Stepper */}
+        <div className="flex items-center justify-between text-xs font-mono py-2 relative">
+          <div className="absolute top-1/2 left-0 right-0 h-0.5 bg-gray-200 dark:bg-gray-700 -z-10 -translate-y-1/2 rounded-full overflow-hidden">
+            <div className={`h-full bg-green-500 transition-all ${
+              complaint.status === 'open' ? 'w-0' :
+              complaint.status === 'assigned' ? 'w-1/3' :
+              complaint.status === 'pending_verification' ? 'w-2/3' : 'w-full'
+            }`}></div>
+          </div>
+          
+          {[
+            { id: 'open', label: 'Reported', val: 0 },
+            { id: 'assigned', label: 'Dispatched', val: 1 },
+            { id: 'pending_verification', label: 'Cleaned', val: 2 },
+            { id: 'resolved', label: 'Verified', val: 3 }
+          ].map((step, idx) => {
+            const currentVal = { open: 0, assigned: 1, pending_verification: 2, resolved: 3 }[complaint.status];
+            const isCompleted = currentVal >= step.val;
+            const isActive = currentVal === step.val;
+            return (
+              <div key={step.id} className="flex flex-col items-center gap-1 bg-white dark:bg-dark-800 px-1">
+                <div className={`w-3 h-3 rounded-full border-2 transition-all ${
+                  isCompleted 
+                    ? 'border-green-500 bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]' 
+                    : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-dark-800'
+                }`}></div>
+                <span className={`${isActive ? 'text-green-600 dark:text-green-400 font-bold' : 'text-gray-400 dark:text-gray-500'}`}>
+                  {step.label}
+                </span>
+              </div>
+            );
+          })}
         </div>
 
         {/* Description */}
@@ -150,7 +184,7 @@ export default function ComplaintCard({ complaint, onStatusChange, isAdmin }) {
             onClick={() => setRatingOpen(true)}
             className="mt-3 w-full btn-secondary text-sm py-2 border-brand-200 text-brand-600 hover:bg-brand-50"
           >
-            ⭐ Rate Resolution
+            Rate Resolution
           </button>
         )}
 

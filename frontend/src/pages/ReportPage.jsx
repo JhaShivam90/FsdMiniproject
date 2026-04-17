@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import Navbar from '../components/Navbar';
 import LocationPickerMap from '../components/LocationPickerMap';
+import CameraCapture from '../components/CameraCapture';
 import api from '../utils/api';
 
 // ── Icon components ──────────────────────────────────
@@ -78,6 +79,10 @@ export default function ReportPage() {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    handleCameraCapture(file);
+  };
+
+  const handleCameraCapture = (file) => {
     if (file.size > 5 * 1024 * 1024) { setError('Image must be under 5MB'); return; }
     setImage(file);
     setPreview(URL.createObjectURL(file));
@@ -276,23 +281,8 @@ export default function ReportPage() {
                 </button>
               </div>
             ) : (
-              <div
-                onClick={() => fileInputRef.current.click()}
-                onDrop={handleDrop}
-                onDragOver={(e) => e.preventDefault()}
-                className="drop-zone border-2 border-dashed rounded-xl p-10 text-center cursor-pointer transition-all group"
-              >
-                <div className={`inline-flex items-center justify-center w-14 h-14 rounded-xl mb-3 transition-transform group-hover:scale-105 ${
-                  isDark ? 'bg-dark-700 text-gray-500' : 'bg-green-50 text-green-400'
-                }`}>
-                  <IconCamera />
-                </div>
-                <p className={`font-medium text-sm ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
-                  Click to upload or drag &amp; drop
-                </p>
-              </div>
+              <CameraCapture onCapture={handleCameraCapture} isDark={isDark} />
             )}
-            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
           </div>
 
           {/* ── Step 2: Location ───────────────────── */}

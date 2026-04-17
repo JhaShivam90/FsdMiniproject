@@ -19,7 +19,8 @@ export default function WorkerDashboard() {
   const [error, setError] = useState('');
   
   const [uploadingId, setUploadingId] = useState(null);
-  const fileInputRef = useRef({});
+  const cameraInputRef = useRef({});
+  const galleryInputRef = useRef({});
 
   useEffect(() => {
     fetchTasks();
@@ -135,25 +136,43 @@ export default function WorkerDashboard() {
                       {/* Action Area */}
                       <div className="mt-6 pt-4 border-t border-gray-100 dark:border-gray-800">
                         {isAssigned && (
-                          <div className="flex items-center gap-3">
+                          <div className="flex flex-col gap-2 mt-4">
+                            <input 
+                              type="file" 
+                              accept="image/*" 
+                              capture="environment"
+                              className="hidden" 
+                              ref={el => cameraInputRef.current[c._id] = el}
+                              onChange={(e) => handleUploadSubmit(c._id, e.target.files[0])}
+                            />
                             <input 
                               type="file" 
                               accept="image/*" 
                               className="hidden" 
-                              ref={el => fileInputRef.current[c._id] = el}
+                              ref={el => galleryInputRef.current[c._id] = el}
                               onChange={(e) => handleUploadSubmit(c._id, e.target.files[0])}
                             />
-                            <button 
-                              onClick={() => fileInputRef.current[c._id].click()}
-                              disabled={uploadingId === c._id}
-                              className="btn-primary w-full sm:w-auto"
-                            >
-                              {uploadingId === c._id ? (
-                                <span className="flex items-center gap-2"><IconSpinner /> Uploading...</span>
-                              ) : (
-                                'Click After Photo & Submit'
-                              )}
-                            </button>
+                            
+                            {uploadingId === c._id ? (
+                              <div className="flex items-center gap-2 text-brand-500 font-medium">
+                                <IconSpinner /> Uploading proof...
+                              </div>
+                            ) : (
+                              <div className="flex gap-2">
+                                <button 
+                                  onClick={() => cameraInputRef.current[c._id].click()}
+                                  className="btn-primary flex-1 text-xs py-2.5"
+                                >
+                                  Take Photo
+                                </button>
+                                <button 
+                                  onClick={() => galleryInputRef.current[c._id].click()}
+                                  className="btn-secondary flex-1 text-xs py-2.5"
+                                >
+                                  Gallery
+                                </button>
+                              </div>
+                            )}
                           </div>
                         )}
 

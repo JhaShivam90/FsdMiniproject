@@ -144,7 +144,7 @@ export default function ComplaintCard({ complaint, onStatusChange, isAdmin }) {
 
         {/* Description */}
         {complaint.description && (
-          <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{complaint.description}</p>
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{complaint.description}</p>
         )}
 
         {/* Assigned Truck Info */}

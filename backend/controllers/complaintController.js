@@ -189,8 +189,7 @@ const transferComplaint = async (req, res) => {
     if (complaint.workerId) {
       const worker = await User.findById(complaint.workerId);
       if (worker) {
-        worker.workerDetails.status = 'idle';
-        await worker.save();
+        await User.updateOne({ _id: worker._id }, { $set: { 'workerDetails.status': 'idle' } });
       }
       complaint.workerId = null;
       complaint.status = 'open'; // Reset to open for the new ward
@@ -234,11 +233,7 @@ const workerSubmit = async (req, res) => {
     complaint.status = 'pending_verification';
     await complaint.save();
 
-    // Free the worker
-    const worker = await User.findById(req.user._id);
-    worker.workerDetails.status = 'idle';
-    // optionally update worker location here if they provide new GPS
-    await worker.save();
+    await User.updateOne({ _id: req.user._id }, { $set: { 'workerDetails.status': 'idle' } });
 
     res.json({ success: true, message: 'Proof submitted. Pending verification.', complaint });
   } catch (err) {

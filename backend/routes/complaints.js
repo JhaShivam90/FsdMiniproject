@@ -19,6 +19,7 @@ const {
   getComplaintById,
   getWorkerComplaints,
   assignTruck,
+  transferComplaint,
   workerSubmit,
   verifyComplaint
 } = require('../controllers/complaintController');
@@ -34,6 +35,7 @@ router.post('/:id/worker-submit', protect, upload.single('image'), workerSubmit)
 // Admin-only routes
 router.get('/all', protect, adminOnly, getAllComplaints);
 router.post('/:id/assign-truck', protect, adminOnly, assignTruck);
+router.patch('/:id/transfer', protect, adminOnly, transferComplaint);
 router.patch('/:id/verify', protect, adminOnly, verifyComplaint);
 router.patch('/:id', protect, adminOnly, updateComplaintStatus);
 

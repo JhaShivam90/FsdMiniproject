@@ -129,10 +129,11 @@ const assignTruck = async (req, res) => {
       return res.status(403).json({ success: false, message: 'Not authorized to assign this complaint' });
     }
 
-    // Find nearest idle worker
+    // Find nearest idle worker assigned to this ward
     const nearestWorker = await User.findOne({
       role: 'worker',
       'workerDetails.status': 'idle',
+      'workerDetails.assignedWard': req.user._id, // Enforce ward subset
       'workerDetails.location': {
         $near: {
           $geometry: {
@@ -144,7 +145,7 @@ const assignTruck = async (req, res) => {
     });
 
     if (!nearestWorker) {
-      return res.status(400).json({ success: false, message: 'No idle trucks available nearby' });
+      return res.status(400).json({ success: false, message: 'No idle trucks available in your ward. You can wait or transfer this report to a nearby ward.' });
     }
 
     // Assign worker and set working
@@ -152,14 +153,65 @@ const assignTruck = async (req, res) => {
     complaint.status = 'assigned';
     await complaint.save();
 
-    nearestWorker.workerDetails.status = 'busy';
-    await nearestWorker.save();
+    await User.updateOne(
+      { _id: nearestWorker._id }, 
+      { $set: { 'workerDetails.status': 'busy' } }
+    );
 
     res.json({ success: true, message: `Truck ${nearestWorker.workerDetails.truckNumber} assigned`, complaint, worker: nearestWorker.workerDetails });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 }
+
+/**
+ * PATCH /api/complaints/:id/transfer
+ * Admin only: Transfers a complaint to another nearby ward.
+ */
+const transferComplaint = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { newAuthorityId, newAuthorityName } = req.body;
+
+    if (!newAuthorityId || !newAuthorityName) {
+      return res.status(400).json({ success: false, message: 'New authority ID and Name are required' });
+    }
+
+    const complaint = await Complaint.findById(id);
+    if (!complaint) return res.status(404).json({ success: false, message: 'Complaint not found' });
+
+    // Validate ownership
+    if (complaint.authorityId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ success: false, message: 'Not authorized to transfer this complaint' });
+    }
+
+    // If it was already assigned to a worker, free the worker
+    if (complaint.workerId) {
+      const worker = await User.findById(complaint.workerId);
+      if (worker) {
+        worker.workerDetails.status = 'idle';
+        await worker.save();
+      }
+      complaint.workerId = null;
+      complaint.status = 'open'; // Reset to open for the new ward
+    }
+
+    // Save transfer history
+    complaint.transferHistory.push({
+      fromAuthorityName: req.user.authorityDetails?.name || req.user.name,
+      toAuthorityName: newAuthorityName,
+      timestamp: Date.now()
+    });
+
+    // Transfer ownership
+    complaint.authorityId = newAuthorityId;
+    await complaint.save();
+
+    res.json({ success: true, message: `Successfully transferred to ${newAuthorityName}`, complaint });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
 
 /**
  * POST /api/complaints/:id/worker-submit
@@ -282,6 +334,7 @@ module.exports = {
   getComplaintById,
   getWorkerComplaints,
   assignTruck,
+  transferComplaint,
   workerSubmit,
   verifyComplaint
 };

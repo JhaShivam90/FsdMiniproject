@@ -53,7 +53,10 @@ const userSchema = new mongoose.Schema(
     // Only used if role is 'worker' (Truck Driver)
     workerDetails: {
       truckNumber: { type: String },
-      garageName: { type: String },
+      assignedWard: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+      },
       location: {
         // GeoJSON for $near queries
         type: {

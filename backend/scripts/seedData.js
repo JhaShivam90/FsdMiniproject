@@ -90,8 +90,9 @@ const seedDB = async () => {
     console.log('Created citizen user (user@test.com)');
 
     // Seed Authorities
+    const createdWards = [];
     for (const ward of wards) {
-      await User.create({
+      const admin = await User.create({
         name: 'Admin - ' + ward.name,
         email: ward.email,
         password: 'password123', // global password
@@ -109,27 +110,28 @@ const seedDB = async () => {
           }
         }
       });
+      createdWards.push(admin);
     }
     console.log(`Created ${wards.length} Ward Authorities`);
 
     // Seed Truck Workers
     let workerCount = 1;
-    for (const garage of garages) {
-      for (let i = 1; i <= 3; i++) {
-        // e.g. MH-04-GA-1234
-        const truckNo = `MH-04-${garage.prefix}-${1000 + workerCount}`;
+    for (const ward of createdWards) {
+      // 4 trucks per ward
+      for (let i = 1; i <= 4; i++) {
+        const truckNo = `MH-04-WD-${1000 + workerCount}`;
         await User.create({
-          name: `Driver ${workerCount} (${garage.name})`,
+          name: `Driver ${workerCount} (${ward.authorityDetails.name})`,
           email: `driver${workerCount}@test.com`,
           password: 'password123',
           role: 'worker',
           workerDetails: {
             truckNumber: truckNo,
-            garageName: garage.name,
+            assignedWard: ward._id,
             location: {
               type: 'Point',
               // slight random offset so they aren't on top of each other exactly
-              coordinates: [garage.lng + (Math.random()*0.005), garage.lat + (Math.random()*0.005)]
+              coordinates: [ward.authorityDetails.location.coordinates[0] + (Math.random()*0.005), ward.authorityDetails.location.coordinates[1] + (Math.random()*0.005)]
             },
             status: 'idle'
           }
@@ -137,7 +139,7 @@ const seedDB = async () => {
         workerCount++;
       }
     }
-    console.log(`Created ${workerCount - 1} Truck Workers across ${garages.length} Garages`);
+    console.log(`Created ${workerCount - 1} Truck Workers assigned to Wards`);
     
     console.log('Seeding Complete! You can login with password123');
     process.exit(0);

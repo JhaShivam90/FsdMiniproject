@@ -2,7 +2,7 @@
  * components/ComplaintCard.jsx — Card showing a single complaint's info
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import StatusBadge from './StatusBadge';
 import api from '../utils/api';
 
@@ -25,6 +25,49 @@ export default function ComplaintCard({ complaint, onStatusChange, isAdmin }) {
   const [ratingOpen, setRatingOpen] = useState(false);
   const [hoverStar, setHoverStar] = useState(0);
   const [submittingRating, setSubmittingRating] = useState(false);
+
+  // Transfer State
+  const [transferOpen, setTransferOpen] = useState(false);
+  const [authorities, setAuthorities] = useState([]);
+  const [fetchingAuths, setFetchingAuths] = useState(false);
+  const [targetAuthority, setTargetAuthority] = useState(null);
+  const [submittingTransfer, setSubmittingTransfer] = useState(false);
+
+  useEffect(() => {
+    if (transferOpen && authorities.length === 0 && complaint.location) {
+      setFetchingAuths(true);
+      api.get(`/authorities/nearby?lat=${complaint.location.latitude}&lng=${complaint.location.longitude}`)
+        .then(res => {
+          // Filter out the current authority
+          const auths = res.data.authorities.filter(a => a._id !== complaint.authorityId);
+          setAuthorities(auths);
+        })
+        .catch(console.error)
+        .finally(() => setFetchingAuths(false));
+    }
+  }, [transferOpen, complaint.location, authorities.length, complaint.authorityId]);
+
+  const handleTransfer = async () => {
+    if (!targetAuthority || submittingTransfer) return;
+    setSubmittingTransfer(true);
+    try {
+      await api.patch(`/complaints/${complaint._id}/transfer`, {
+        newAuthorityId: targetAuthority._id,
+        newAuthorityName: targetAuthority.authorityDetails?.name || targetAuthority.name
+      });
+      setTransferOpen(false);
+      // To refresh parent list:
+      if (typeof onStatusChange === 'function') {
+        // Here we just trigger a refresh string, AdminDashboard doesn't strictly have a "refreshOne", 
+        // but we can pass 'transferred' and let it remove the card or refetch depending on how it's built
+        onStatusChange(complaint._id, 'transferred');
+      }
+    } catch (e) {
+      alert(e.response?.data?.message || 'Failed to transfer complaint');
+    } finally {
+      setSubmittingTransfer(false);
+    }
+  };
 
   const date = new Date(complaint.createdAt).toLocaleDateString('en-IN', {
     day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
@@ -169,12 +212,80 @@ export default function ComplaintCard({ complaint, onStatusChange, isAdmin }) {
 
         {/* Admin action button */}
         {isAdmin && nextStatus[complaint.status] && (
-          <button
-            onClick={() => onStatusChange(complaint._id, nextStatus[complaint.status])}
-            className="mt-3 w-full btn-primary text-sm py-2"
-          >
-            {nextLabel[complaint.status]}
-          </button>
+          <div className="mt-3 flex flex-col gap-2">
+            <button
+              onClick={() => onStatusChange(complaint._id, nextStatus[complaint.status])}
+              className="w-full btn-primary text-sm py-2"
+            >
+              {nextLabel[complaint.status]}
+            </button>
+            
+            {complaint.status === 'open' && (
+              <button
+                onClick={() => setTransferOpen(true)}
+                className="w-full btn-secondary text-sm py-2"
+              >
+                Transfer to Nearby Ward
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Transfer Modal / UI */}
+        {isAdmin && transferOpen && (
+          <div className="mt-3 p-3 rounded-lg border bg-gray-50 dark:bg-dark-800 dark:border-gray-700 animate-slide-up">
+            <p className="text-xs font-medium mb-2 text-gray-600 dark:text-gray-400">Select Ward to Transfer:</p>
+            {authorities.length === 0 && !fetchingAuths ? (
+              <p className="text-xs text-red-500 mb-2">No nearby wards found.</p>
+            ) : fetchingAuths ? (
+              <p className="text-xs text-brand-500 mb-2">Finding nearby wards...</p>
+            ) : (
+              <select
+                className="input w-full text-sm mb-2"
+                onChange={(e) => {
+                  const sel = authorities.find(a => a._id === e.target.value);
+                  setTargetAuthority(sel);
+                }}
+                defaultValue=""
+              >
+                <option value="" disabled>-- Select Ward --</option>
+                {authorities.map(a => (
+                  <option key={a._id} value={a._id}>
+                    {a.authorityDetails?.name || a.name}
+                  </option>
+                ))}
+              </select>
+            )}
+            <div className="flex gap-2">
+              <button 
+                onClick={handleTransfer} 
+                disabled={!targetAuthority || submittingTransfer}
+                className="flex-1 btn-primary text-xs py-1.5"
+              >
+                {submittingTransfer ? 'Transferring...' : 'Confirm'}
+              </button>
+              <button 
+                onClick={() => setTransferOpen(false)} 
+                className="flex-1 btn-secondary text-xs py-1.5"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Transfer History Notification for User */}
+        {!isAdmin && complaint.transferHistory && complaint.transferHistory.length > 0 && (
+          <div className="mt-3 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-lg p-2.5">
+            <p className="text-xs font-medium text-amber-700 dark:text-amber-400 flex items-start gap-1.5">
+              <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+              </svg>
+              <span>
+                Transferred to <strong>{complaint.transferHistory[complaint.transferHistory.length - 1].toAuthorityName}</strong> due to truck unavailability.
+              </span>
+            </p>
+          </div>
         )}
 
         {/* User Rate action button */}

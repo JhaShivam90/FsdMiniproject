@@ -49,6 +49,15 @@ const complaintSchema = new mongoose.Schema(
       default: '',
     },
 
+    // Transfer history across wards
+    transferHistory: [
+      {
+        fromAuthorityName: String,
+        toAuthorityName: String,
+        timestamp: { type: Date, default: Date.now }
+      }
+    ],
+
     // Reference to the user who submitted this complaint
     userId: {
       type: mongoose.Schema.Types.ObjectId,

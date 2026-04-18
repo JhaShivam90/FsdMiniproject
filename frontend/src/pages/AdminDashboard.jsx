@@ -79,6 +79,13 @@ export default function AdminDashboard() {
   };
 
   const handleStatusChange = async (id, newStatus) => {
+    if (newStatus === 'transferred') {
+      // Remove complaint from the current admin's list
+      setComplaints(prev => prev.filter(c => c._id !== id));
+      showToast('Successfully transferred complaint to new ward.', 'success');
+      return;
+    }
+
     setUpdating(id);
     try {
       if (newStatus === 'assigned') {

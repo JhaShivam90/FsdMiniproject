@@ -110,8 +110,8 @@ export default function ComplaintCard({ complaint, onStatusChange, isAdmin }) {
         </div>
 
         {/* Progress Stepper Minimal */}
-        <div className="relative mt-3 mb-2 px-1">
-          <div className="absolute top-1/2 left-0 right-0 h-[1px] bg-gray-200 dark:bg-gray-700 -translate-y-1/2">
+        <div className="relative mt-3 mb-2 px-1 h-4">
+          <div className="absolute top-1 left-0 right-0 h-[1px] bg-gray-200 dark:bg-gray-700 -translate-y-1/2">
             <div className={`h-full bg-green-500 transition-all ${
               complaint.status === 'open' ? 'w-0' :
               complaint.status === 'assigned' ? 'w-1/3' :
@@ -144,7 +144,7 @@ export default function ComplaintCard({ complaint, onStatusChange, isAdmin }) {
 
         {/* Description */}
         {complaint.description && (
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{complaint.description}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{complaint.description}</p>
         )}
 
         {/* Assigned Truck Info */}

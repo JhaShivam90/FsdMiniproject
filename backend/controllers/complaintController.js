@@ -65,8 +65,10 @@ const createComplaint = async (req, res) => {
       }
     } catch (aiError) {
       console.error('[AI Validation Error]', aiError.message);
-      // If AI fails (e.g. rate limit), we either fail safe or let it pass. We'll let it pass to not break UX for random API outages.
-      console.log('Allowing upload to proceed despite AI error.');
+      return res.status(500).json({ 
+        success: false, 
+        message: 'AI Service Error. (Did you add the G_API key to Render?): ' + aiError.message 
+      });
     }
     // --- END AI VALIDATION ---
 

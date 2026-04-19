@@ -64,11 +64,8 @@ const createComplaint = async (req, res) => {
         });
       }
     } catch (aiError) {
-      console.error('[AI Validation Error]', aiError.message);
-      return res.status(500).json({ 
-        success: false, 
-        message: 'AI Service Error. (Did you add the G_API key to Render?): ' + aiError.message 
-      });
+      console.error('[AI Validation Outage]', aiError.message);
+      // Gemini API is temporarily overloaded / down. We fail-safe and let the upload proceed to human authority.
     }
     // --- END AI VALIDATION ---
 

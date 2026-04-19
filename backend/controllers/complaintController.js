@@ -39,7 +39,7 @@ const createComplaint = async (req, res) => {
 
       // 2. Initialize Gemini
       const genAI = new GoogleGenerativeAI(process.env.G_API);
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
 
       // 3. Prompt Gemini
       const prompt = "Analyze this image. Does it show a garbage dump, overflowing trash, waste, or litter that needs cleaning? Reply with only a single word: YES or NO.";

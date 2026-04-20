@@ -5,8 +5,6 @@
 
 const Complaint = require('../models/Complaint');
 const User = require('../models/User');
-const axios = require('axios');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { cloudinary } = require('../middleware/upload');
 
 /**
@@ -31,43 +29,7 @@ const createComplaint = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Authority ID is required' });
     }
 
-    // --- GEMINI AI IMAGE VALIDATION ---
-    try {
-      // 1. Download the uploaded image from Cloudinary into an array buffer
-      const imageResponse = await axios.get(req.file.path, { responseType: 'arraybuffer' });
-      const base64Data = Buffer.from(imageResponse.data, 'binary').toString('base64');
 
-      // 2. Initialize Gemini
-      const genAI = new GoogleGenerativeAI(process.env.G_API);
-      const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
-
-      // 3. Prompt Gemini
-      const prompt = "Analyze this image. Does it show a garbage dump, overflowing trash, waste, or litter that needs cleaning? Reply with only a single word: YES or NO.";
-      const imagePart = {
-        inlineData: {
-          data: base64Data,
-          mimeType: req.file.mimetype || 'image/jpeg'
-        }
-      };
-
-      const result = await model.generateContent([prompt, imagePart]);
-      const aiResponse = result.response.text().trim().toLowerCase();
-      console.log(`[AI Validation] Result for ${req.file.filename}: ${aiResponse}`);
-
-      // 4. Reject if not garbage (strict match check)
-      if (!aiResponse.includes('yes')) {
-        // Delete invalid image from Cloudinary to clean up
-        await cloudinary.uploader.destroy(req.file.filename);
-        return res.status(400).json({ 
-          success: false, 
-          message: 'AI Validation Failed: No garbage or waste detected in this image. Please upload a valid photo.' 
-        });
-      }
-    } catch (aiError) {
-      console.error('[AI Validation Outage]', aiError.message);
-      // Gemini API is temporarily overloaded / down. We fail-safe and let the upload proceed to human authority.
-    }
-    // --- END AI VALIDATION ---
 
     const complaint = await Complaint.create({
       imageUrl: req.file.path,           // Cloudinary secure URL

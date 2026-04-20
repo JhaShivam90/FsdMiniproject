@@ -5,6 +5,8 @@
 
 const Complaint = require('../models/Complaint');
 const User = require('../models/User');
+const axios = require('axios');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { cloudinary } = require('../middleware/upload');
 
 /**
@@ -29,7 +31,50 @@ const createComplaint = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Authority ID is required' });
     }
 
+    // --- GEMINI AI IMAGE VALIDATION ---
+    try {
+      // 1. Wait 1.5 seconds for Cloudinary's content-delivery network to propagate the file
+      await new Promise(resolve => setTimeout(resolve, 1500));
 
+      // 2. Download the uploaded image from Cloudinary into an array buffer
+      const imageResponse = await axios.get(req.file.path, { responseType: 'arraybuffer' });
+      const base64Data = Buffer.from(imageResponse.data, 'binary').toString('base64');
+
+      // 2. Initialize Gemini
+      const genAI = new GoogleGenerativeAI(process.env.G_API);
+      const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
+
+      // 3. Prompt Gemini
+      const prompt = "Analyze this image. Does it show a garbage dump, overflowing trash, waste, or litter that needs cleaning? Reply with only a single word: YES or NO.";
+      const imagePart = {
+        inlineData: {
+          data: base64Data,
+          mimeType: req.file.mimetype || 'image/jpeg'
+        }
+      };
+
+      const result = await model.generateContent([prompt, imagePart]);
+      const aiResponse = result.response.text().trim().toLowerCase();
+      console.log(`[AI Validation] Result for ${req.file.filename}: ${aiResponse}`);
+
+      // 4. Reject if not garbage (strict match check)
+      if (!aiResponse.includes('yes')) {
+        // Delete invalid image from Cloudinary to clean up
+        await cloudinary.uploader.destroy(req.file.filename);
+        return res.status(400).json({
+          success: false,
+          message: 'AI Validation Failed: No garbage or waste detected in this image. Please upload a valid photo.'
+        });
+      }
+    } catch (aiError) {
+      console.error('[AI Validation Outage]', aiError.message);
+      // Hard fail to ensure no assignment sheets bypass when API goes down or is rate-limited.
+      return res.status(500).json({
+        success: false,
+        message: 'AI Validation Service Error (High Traffic or Timeout). Please try again shortly. Details: ' + aiError.message
+      });
+    }
+    // --- END AI VALIDATION ---
 
     const complaint = await Complaint.create({
       imageUrl: req.file.path,           // Cloudinary secure URL
@@ -100,7 +145,7 @@ const getAllComplaints = async (req, res) => {
 
     const filter = {};
     if (status) filter.status = status;
-    
+
     // If the user is an admin (authority), only show complaints assigned to them
     if (req.user.role === 'admin') {
       filter.authorityId = req.user._id;
@@ -126,7 +171,7 @@ const assignTruck = async (req, res) => {
     const { id } = req.params;
     const complaint = await Complaint.findById(id);
     if (!complaint) return res.status(404).json({ success: false, message: 'Complaint not found' });
-    
+
     // Ensure only the assigned authority can do this
     if (complaint.authorityId.toString() !== req.user._id.toString()) {
       return res.status(403).json({ success: false, message: 'Not authorized to assign this complaint' });
@@ -157,7 +202,7 @@ const assignTruck = async (req, res) => {
     await complaint.save();
 
     await User.updateOne(
-      { _id: nearestWorker._id }, 
+      { _id: nearestWorker._id },
       { $set: { 'workerDetails.status': 'busy' } }
     );
 

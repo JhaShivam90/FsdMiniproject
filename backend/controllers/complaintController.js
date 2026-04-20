@@ -317,6 +317,33 @@ const verifyComplaint = async (req, res) => {
 };
 
 /**
+ * PATCH /api/complaints/:id/reject
+ * Admin only: Rejects a complaint permanently.
+ */
+const rejectComplaint = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const complaint = await Complaint.findById(id);
+    if (!complaint) return res.status(404).json({ success: false, message: 'Complaint not found' });
+
+    if (complaint.authorityId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ success: false, message: 'Not authorized' });
+    }
+
+    if (complaint.status !== 'open') {
+      return res.status(400).json({ success: false, message: 'Only open complaints can be rejected' });
+    }
+
+    complaint.status = 'rejected';
+    await complaint.save();
+
+    res.json({ success: true, message: 'Complaint rejected', complaint });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+/**
  * PATCH /api/complaints/:id
  * Legacy: Updates the status of a complaint (admin only).
  */
@@ -379,5 +406,6 @@ module.exports = {
   assignTruck,
   transferComplaint,
   workerSubmit,
-  verifyComplaint
+  verifyComplaint,
+  rejectComplaint
 };

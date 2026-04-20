@@ -38,7 +38,7 @@ const complaintSchema = new mongoose.Schema(
     // Complaint lifecycle status
     status: {
       type: String,
-      enum: ['open', 'assigned', 'pending_verification', 'resolved'],
+      enum: ['open', 'assigned', 'pending_verification', 'resolved', 'rejected'],
       default: 'open',
     },
 

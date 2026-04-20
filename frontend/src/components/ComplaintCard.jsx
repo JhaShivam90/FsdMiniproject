@@ -153,6 +153,11 @@ export default function ComplaintCard({ complaint, onStatusChange, isAdmin }) {
         </div>
 
         {/* Progress Stepper Minimal */}
+        {complaint.status === 'rejected' ? (
+          <div className="relative mt-3 mb-2 px-1 py-1.5 bg-red-500/10 dark:bg-red-500/20 rounded-lg border border-red-500/20 text-center">
+            <span className="text-[11px] font-bold text-red-600 dark:text-red-400 uppercase tracking-widest">[ REJECTED BY WARD ]</span>
+          </div>
+        ) : (
         <div className="relative mt-3 mb-2 px-1 h-4">
           <div className="absolute top-1 left-0 right-0 h-[1px] bg-gray-200 dark:bg-gray-700 -translate-y-1/2">
             <div className={`h-full bg-green-500 transition-all ${
@@ -184,6 +189,7 @@ export default function ComplaintCard({ complaint, onStatusChange, isAdmin }) {
             })}
           </div>
         </div>
+        )}
 
         {/* Description */}
         {complaint.description && (
@@ -221,12 +227,29 @@ export default function ComplaintCard({ complaint, onStatusChange, isAdmin }) {
             </button>
             
             {complaint.status === 'open' && (
-              <button
-                onClick={() => setTransferOpen(true)}
-                className="w-full btn-secondary text-sm py-2"
-              >
-                Transfer to Nearby Ward
-              </button>
+              <div className="flex gap-2 w-full">
+                <button
+                  onClick={() => setTransferOpen(true)}
+                  className="flex-1 btn-secondary text-sm py-2"
+                >
+                  Transfer
+                </button>
+                <button
+                  onClick={async () => {
+                    if(window.confirm('Are you sure you want to permanently reject this report?')) {
+                      try {
+                        await api.patch(`/complaints/${complaint._id}/reject`);
+                        if (typeof onStatusChange === 'function') onStatusChange(complaint._id, 'rejected');
+                      } catch (e) {
+                         alert(e.response?.data?.message || 'Failed to reject complaint');
+                      }
+                    }
+                  }}
+                  className="flex-1 px-4 py-2 border border-red-500/20 text-red-600 dark:border-red-500/30 dark:text-red-500 rounded-xl hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors text-sm font-semibold"
+                >
+                  Reject
+                </button>
+              </div>
             )}
           </div>
         )}

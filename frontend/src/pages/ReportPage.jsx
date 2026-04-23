@@ -147,7 +147,7 @@ export default function ReportPage() {
         setError('Could not get location. Please select manually on the map.'); 
         setShowMap(true);
       },
-      { enableHighAccuracy: true, timeout: 10000 }
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
     );
   };
 
